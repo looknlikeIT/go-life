@@ -1,0 +1,50 @@
+<odoo>
+  <data>
+    <template id="assets_frontend" inherit_id="website.assets_frontend">
+        <xpath expr="link[last()]" position="after">
+            <link rel="stylesheet" type="text/scss" href="/website_pbo/static/src/css/nouislider.min.css"/>
+        </xpath>
+        <xpath expr="script[last()]" position="after">
+            <script type="text/javascript" src="/website_pbo/static/src/js/nouislider.min.js"/>
+            <script type="text/javascript" src="/website_pbo/static/src/js/wNumb.js"/>
+        </xpath>
+    </template>
+    <template id="products_attributes_pbo" inherit_id="website_sale.products_attributes" name="Product Attribute's Filters pbo">
+        <xpath expr="//form[hasclass('js_attributes')]/input[@name='search']" position="before">
+            <!-- <input type="range" name='price' multiple="multiple" value="0,10000" /> -->
+            <div>
+                <strong>Price Range</strong><br/><br/><br/>
+                <div id="slider"></div>
+                <input type="hidden" name="price" id="price-input" t-attf-value='#{current_min_price}-#{current_max_price}'/>
+                <script>
+                    var slider = document.getElementById('slider');
+
+                    noUiSlider.create(slider, {
+                        start: [<t t-esc="current_min_price"/>, <t t-esc="current_max_price"/>],
+                        connect: true,
+                        tooltips: [wNumb({decimals: 0}), wNumb({decimals: 0})],
+                        //tooltips: [true, true],
+                        range: {
+                            'min': <t t-esc="slider_min_price"/>,
+                            'max': <t t-esc="slider_max_price"/>
+                        }
+                    });
+                    slider.noUiSlider.on('change.one', function (o) { var newRange = o[0] + '-' + o[1]; $('#price-input').val(newRange); $('#price-input').prop('value', newRange); $('#price-input').change()});
+                </script>
+            </div>
+
+        </xpath>
+    </template>
+
+    <template id="product_pager_pbo" inherit_id="website_sale.product" name="__CUSTO__ Product Pager Pbo">
+        <xpath expr="//ol[hasclass('breadcrumb')]" position="before">
+            <div class="pull-right btn-group" role="group">
+              <a t-att-href="prev_record" type="button" t-attf-class="btn btn-secondary #{not prev_record and 'disabled'}">&lt;</a>
+              <a t-att-href="next_record" type="button" t-attf-class="btn btn-secondary #{not next_record and 'disabled'}">&gt;</a>
+            </div>
+        </xpath>
+    </template>
+
+
+  </data>
+</odoo>
