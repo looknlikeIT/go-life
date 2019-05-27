@@ -3,10 +3,12 @@
     <template id="assets_frontend" inherit_id="website.assets_frontend">
         <xpath expr="link[last()]" position="after">
             <link rel="stylesheet" type="text/scss" href="/website_pbo/static/src/css/nouislider.min.css"/>
+            <link rel="stylesheet" type="text/scss" href="/website_pbo/static/src/css/price_slider.scss"/>
         </xpath>
         <xpath expr="script[last()]" position="after">
             <script type="text/javascript" src="/website_pbo/static/src/js/nouislider.min.js"/>
             <script type="text/javascript" src="/website_pbo/static/src/js/wNumb.js"/>
+            <script type="text/javascript" src="/website_pbo/static/src/js/price_slider.js"/>
         </xpath>
     </template>
     <template id="products_attributes_pbo" inherit_id="website_sale.products_attributes" name="Product Attribute's Filters pbo">
@@ -14,23 +16,15 @@
             <!-- <input type="range" name='price' multiple="multiple" value="0,10000" /> -->
             <div>
                 <strong>Price Range</strong><br/><br/><br/>
-                <div id="slider"></div>
+                <div id="sliderPrice"
+                    class='sliderPrice'
+                    t-att-data-current-min="int(current_min_price)"
+                    t-att-data-current-max="int(current_max_price)"
+                    t-att-data-slider-min="int(slider_min_price)"
+                    t-att-data-slider-max="int(slider_max_price)"
+                    data-input="#price-input"
+                />
                 <input type="hidden" name="price" id="price-input" t-attf-value='#{current_min_price}-#{current_max_price}'/>
-                <script>
-                    var slider = document.getElementById('slider');
-
-                    noUiSlider.create(slider, {
-                        start: [<t t-esc="current_min_price"/>, <t t-esc="current_max_price"/>],
-                        connect: true,
-                        tooltips: [wNumb({decimals: 0}), wNumb({decimals: 0})],
-                        //tooltips: [true, true],
-                        range: {
-                            'min': <t t-esc="slider_min_price"/>,
-                            'max': <t t-esc="slider_max_price"/>
-                        }
-                    });
-                    slider.noUiSlider.on('change.one', function (o) { var newRange = o[0] + '-' + o[1]; $('#price-input').val(newRange); $('#price-input').prop('value', newRange); $('#price-input').change()});
-                </script>
             </div>
 
         </xpath>
