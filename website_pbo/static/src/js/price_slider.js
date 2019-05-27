@@ -13,12 +13,12 @@ var sliderPrice = Widget.extend({
         this.slider = document.getElementById('sliderPrice');
 
         var conf = {
-            start: [this.$el.data('current-min'), this.$el.data('current-max')],
+            start: [this.$el.data('current-min') || 0, this.$el.data('current-max') || 10000],
             connect: true,
             tooltips: [wNumb({decimals: 0}), wNumb({decimals: 0})],
             range: {
-                'min': this.$el.data('slider-min'),
-                'max': this.$el.data('slider-max'),
+                'min': this.$el.data('slider-min') || 0,
+                'max': this.$el.data('slider-max') || 10000,
             }
         }
         noUiSlider.create(this.slider, conf);
