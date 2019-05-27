@@ -15,13 +15,13 @@
         <xpath expr="//form[hasclass('js_attributes')]/input[@name='search']" position="before">
             <!-- <input type="range" name='price' multiple="multiple" value="0,10000" /> -->
             <div>
-                <strong>Price Range</strong><br/><br/><br/>
+                <strong>Price Range</strong>
                 <div id="sliderPrice"
                     class='sliderPrice'
-                    t-att-data-current-min="int(current_min_price)"
-                    t-att-data-current-max="int(current_max_price)"
-                    t-att-data-slider-min="int(slider_min_price)"
-                    t-att-data-slider-max="int(slider_max_price)"
+                    t-att-data-current-min="int(float(current_min_price))"
+                    t-att-data-current-max="int(float(current_max_price))"
+                    t-att-data-slider-min="int(float(slider_min_price))"
+                    t-att-data-slider-max="int(float(slider_max_price))"
                     data-input="#price-input"
                 />
                 <input type="hidden" name="price" id="price-input" t-attf-value='#{current_min_price}-#{current_max_price}'/>
