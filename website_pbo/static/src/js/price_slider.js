@@ -23,7 +23,7 @@ var sliderPrice = Widget.extend({
         }
         noUiSlider.create(this.slider, conf);
         this.slider.noUiSlider.on('change.one', function (o) {
-            var input = this.$el.data('input');
+            var input = self.$el.data('input');
             var newRange = o[0] + '-' + o[1];
             $(input).val(newRange);
             $(input).change()
