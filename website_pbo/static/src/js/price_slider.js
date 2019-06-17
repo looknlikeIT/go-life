@@ -33,6 +33,6 @@ var sliderPrice = Widget.extend({
 });
 
 websiteRootData.websiteRootRegistry.add(sliderPrice, '.sliderPrice');
-return LazyTemplateRenderer;
+return sliderPrice;
 
 })

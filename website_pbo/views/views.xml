@@ -14,7 +14,7 @@
     <template id="products_attributes_pbo" inherit_id="website_sale.products_attributes" name="Product Attribute's Filters pbo">
         <xpath expr="//form[hasclass('js_attributes')]/input[@name='search']" position="before">
             <!-- <input type="range" name='price' multiple="multiple" value="0,10000" /> -->
-            <div>
+            <div t-if='int(float(slider_max_price)) > int(float(slider_min_price)+1)'>
                 <strong>Price Range</strong>
                 <div id="sliderPrice"
                     class='sliderPrice'
