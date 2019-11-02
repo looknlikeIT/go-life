@@ -3,15 +3,36 @@
 from odoo import models, fields, api
 
 
+class SaleCouponProgram(models.Model):
+    _inherit = 'sale.coupon.program'
+
+    level_up = fields.Many2one('res.partner')
+
+
+class sale_order(models.Model):
+    _inherit = 'sale.order'
+
+    def _prepare_invoice(self):
+        invoice_vals = super(sale_order, self)._prepare_invoice()
+        coupon_lvl_up = self.applied_coupon_ids and self.applied_coupon_ids.mapped('program_id.level_up')
+        invoice_vals['lnl_parent_id'] = coupon_lvl_up and coupon_lvl_up[0].id or self.partner_id.lnl_parent_id.id
+
+        if coupon_lvl_up and not self.partner_id.lnl_parent_id:
+            self.partner_id.lnl_parent_id = coupon_lvl_up
+        return invoice_vals
+
+
 class account_invoice(models.Model):
     _inherit = 'account.invoice'
+
+    lnl_parent_id = fields.Many2one('res.partner')
 
     @api.multi
     def action_invoice_paid(self):
         # lots of duplicate calls to action_invoice_paid, so we remove those already paid
         to_pay_invoices = self.filtered(lambda inv: inv.state != 'paid')
         for inv in to_pay_invoices:
-            p = inv.partner_id
+            p = inv.lnl_parent_id
             while p.lnl_parent_id:
                 self.env['lnl.com'].sudo().create({
                     'invoice_id': inv.id,
@@ -81,7 +102,6 @@ class res_partner(models.Model):
 
     @api.depends('invoice_ids')
     def get_position(self):
-        print('Get POS')
         for record in self:
             if record.releg_fixed_pos:
                 record.releg_pos = record.releg_fixed_pos
@@ -125,7 +145,6 @@ class res_partner(models.Model):
 
     @api.depends('invoice_ids', 'invoice_ids.state')
     def get_ca_propre(self):
-        print('CA Propre')
         for record in self:
             amounts = record.invoice_ids.filtered(lambda x: x.state == 'paid').mapped('amount_total')
             record.releg_cap = sum(amounts)
@@ -134,6 +153,5 @@ class res_partner(models.Model):
     # -> need to create com 0 too !
     @api.depends('com_ids', 'invoice_ids', 'invoice_ids.state')
     def get_ca_global(self):
-        print('CA Global')
         for record in self:
             record.releg_cag = sum(record.lnl_child_ids.mapped('releg_cap')) + record.releg_cap

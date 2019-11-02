@@ -6,7 +6,7 @@
     'author': "pbo",
     'category': 'Uncategorized',
     'version': '0.1',
-    'depends': ['sale_management', 'account'],
+    'depends': ['sale_management', 'account', 'sale_coupon'],
     'data': [
         'security/ir.model.access.csv',
         'views/views.xml',
