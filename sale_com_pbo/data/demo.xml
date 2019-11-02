@@ -1,0 +1,19 @@
+<odoo>
+  <data>
+    <record model="res.partner" id="p4">
+      <field name='name'>P4</field>
+    </record>
+    <record model="res.partner" id="p3">
+      <field name='name'>P3</field>
+      <field name='lnl_parent_id' ref='sale_com_pbo.p4'/>
+    </record>
+    <record model="res.partner" id="p2">
+      <field name='name'>P2</field>
+      <field name='lnl_parent_id' ref='sale_com_pbo.p3'/>
+    </record>
+    <record model="res.partner" id="p1">
+      <field name='name'>P1</field>
+      <field name='lnl_parent_id' ref='sale_com_pbo.p2'/>
+    </record>
+  </data>
+</odoo>

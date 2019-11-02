@@ -1,0 +1,70 @@
+<odoo>
+  <data>
+      <record id="view_partner_form_inherit_coms_pbo" model="ir.ui.view">
+        <field name="name">res.partner.form.coms.pbo</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form[1]/sheet[1]/notebook[1]" position="inside">
+              <page name="page_commission" string="Commissions">
+                <group name="group_commission">
+                  <group name="group_commission_left">
+                    <field name="lnl_parent_id"/>
+                    <field name="releg_cap"/>
+                    <field name="releg_cag"/>
+                    <field name="releg_coms_amount"/>
+                    <field name="releg_coms_unpaid_amount"/>
+                    <field name="releg_fixed_pos"/>
+                    <field name="releg_pos" attrs="{'invisible': [('releg_fixed_pos', '&gt;', 0)] }" readonly="1"/>
+                    <!-- <button class="btn btn-primary" type="action" name="648" string="Open coupons"/> -->
+                  </group>
+                  <group name="group_commission_right">
+                    <field name="lnl_child_ids">
+                      <tree>
+                        <field name="name"/>
+                        <field name="email"/>
+                        <field name="releg_cap"/>
+                      </tree>
+                    </field>
+                  </group>
+                </group>
+              </page>
+          </xpath>
+          <button name="toggle_active" position="before">
+              <button class="oe_stat_button" type="action" icon="fa-ticket" name="647" attrs="{'invisible': [('releg_coms_amount','=', 0)]}">
+                  <field string="Com" name="releg_coms_amount" widget="statinfo"/> €
+              </button>
+          </button>
+        </field>
+    </record>
+    <!-- explicit list view definition -->
+    <record model="ir.ui.view" id="sale_com_pbo.list">
+      <field name="name">Commission list</field>
+      <field name="model">lnl.com</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="create_date" />
+          <field name="invoice_id" />
+          <field name="amount" />
+          <field name="partner_id" />
+          <field name="pos" />
+          <field name="down_pos" string="N- Pos"/>
+          <field name="src_amount" string="Invoice Amount"/>
+          <field name="src_partner_id" string="N- From"/>
+        </tree>
+      </field>
+    </record>
+
+    <!-- actions opening views on models -->
+    <record model="ir.actions.act_window" id="sale_com_pbo.action_window">
+      <field name="name">Commissions</field>
+      <field name="res_model">lnl.com</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- menu categories -->
+    <menuitem name="Coms" id="sale_com_pbo.menu_1_list" parent="sale.menu_sale_config"
+      action="sale_com_pbo.action_window"/>
+
+  </data>
+</odoo>
