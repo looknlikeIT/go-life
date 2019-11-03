@@ -14,11 +14,13 @@ class sale_order(models.Model):
 
     def _prepare_invoice(self):
         invoice_vals = super(sale_order, self)._prepare_invoice()
-        coupon_lvl_up = self.applied_coupon_ids and self.applied_coupon_ids.mapped('program_id.level_up')
-        invoice_vals['lnl_parent_id'] = coupon_lvl_up and coupon_lvl_up[0].id or self.partner_id.lnl_parent_id.id
+        promo_lvl_up = self.code_promo_program_id.level_up.id  # Promotion Programs
+        coupon_lvl_up = self.applied_coupon_ids.mapped('program_id.level_up')  # Coupon Programs
+        coupon_lvl_up = coupon_lvl_up and coupon_lvl_up[0].id
+        invoice_vals['lnl_parent_id'] = promo_lvl_up or coupon_lvl_up or self.partner_id.lnl_parent_id.id
 
-        if coupon_lvl_up and not self.partner_id.lnl_parent_id:
-            self.partner_id.lnl_parent_id = coupon_lvl_up
+        if not self.partner_id.lnl_parent_id and (promo_lvl_up or coupon_lvl_up):
+            self.partner_id.lnl_parent_id = promo_lvl_up or coupon_lvl_up
         return invoice_vals
 
 
