@@ -1,0 +1,124 @@
+<odoo>
+  <data>
+
+  <record id="sale_com_pbo.server_act_pay_partner_coms" model="ir.actions.server">
+    <field name="binding_model_id" ref="base.model_res_partner"/>
+    <field name="binding_type">action</field>
+    <field name="code"><![CDATA[
+
+for p in records:
+    total = round(p.releg_coms_unpaid_amount, 2)
+    if total > 0:
+      if not p.vat:
+        prog = env.ref('lnl_com.program_pay_com').copy({
+          'name': 'Com Coupon %s' % total,
+          'discount_fixed_amount': total,
+        })
+        report = env.ref('lnl_com.sales_coupon_program_action_report')
+        coupon = env['sale.coupon'].create({
+          'program_id': prog.id,
+          'partner_id': p.id,
+        })
+        coupon.write({
+          'code': 'LNLCOM%0.3d%s' % (record.id, coupon.code[:9]),
+        })
+
+        # link attachment to order and not coupon itself
+        report.render_qweb_pdf(coupon.ids)
+        att = report.retrieve_attachment(coupon)
+        att.write({
+          'res_model': p._name,
+          'res_id': p.id,
+        })
+
+        p.com_ids.filtered(lambda x: not x.paid_date).sudo().write({'paid_date': datetime.datetime.now()})
+
+        template = env.ref('sale_com_pbo.mail_template_com_coupon')
+        template.send_mail(coupon.id)
+      else:
+        group = env['lnl.com.group'].sudo().create({
+          'partner_id': p.id,
+          'amount': total,
+          'paid_date': False
+        })
+        p.com_ids.filtered(lambda x: not x.paid_date).sudo().write({'group_id': group.id})
+
+        template = env.ref('sale_com_pbo.mail_template_comgroup_coupon')
+        template.send_mail(group.id)
+    else:
+      if len(records) == 1:
+        raise Warning("Nothing to commission")
+]]></field>
+    <field name="model_id" ref="base.model_res_partner"/>
+    <field name="name">Pay commission</field>
+    <field name="sequence">5</field>
+    <field name="state">code</field>
+  </record>
+
+  <record id="mail_template_com_coupon" model="mail.template">
+    <field name="name">Coms to Coupon</field>
+    <field name="model_id" ref="sale_coupon.model_sale_coupon"/>
+    <field name="subject">You coupon for an amount of ${object.program_id.discount_fixed_amount} €</field>
+    <field name="use_default_to" eval="True"/>
+    <field name="body_html" type="xml">
+      <div>
+        Dear ${object.partner_id and object.partner_id.name or 'faithful'},<br/><br/>
+        We are pleased to provide you your commission via this coupon.
+        <br/><br/>
+        You can use this code to benefit from your ${object.program_id.discount_fixed_amount} € with this code:
+        <div style="margin: 16px 0px 16px 100px;">
+          <span style="padding: 8px 16px 8px 16px; font-size: 14px; color: #FFFFFF; text-decoration: none !important; background-color: #875A7B; border: 0px solid #875A7B; border-radius:3px">
+              ${object.code}
+          </span>
+        </div>
+        <br/><br/>
+        Thank you,
+        <br/><br/>
+        -----------------<br/>
+        Look N Like
+      </div>
+    </field>
+    <field name="user_signature" eval="False"/>
+    <field name="auto_delete" eval="True"/>
+  </record>
+
+  <record id="mail_template_comgroup_coupon" model="mail.template">
+    <field name="name">Coms to Coupon</field>
+    <field name="model_id" ref="sale_coupon.model_sale_coupon"/>
+    <field name="subject">Your commissions for an amount of ${object.amount} €</field>
+    <field name="use_default_to" eval="True"/>
+    <field name="body_html" type="xml">
+      <div>
+        Dear ${object.partner_id and object.partner_id.name or 'faithful'},<br/><br/>
+        We are pleased to announce you that you can redeem your commissions for an amount of:
+        <br/><br/>
+        <div style="margin: 16px 0px 16px 100px;">
+          <span style="padding: 8px 16px 8px 16px; font-size: 14px; color: #FFFFFF; text-decoration: none !important; background-color: #875A7B; border: 0px solid #875A7B; border-radius:3px">
+              ${object.amount} €
+          </span>
+        </div>
+        <br/><br/>
+        Thank you,
+        <br/><br/>
+        -----------------<br/>
+        Look N Like
+      </div>
+    </field>
+    <field name="user_signature" eval="False"/>
+    <field name="auto_delete" eval="True"/>
+  </record>
+
+
+  <record model="ir.actions.act_window" id="open_coupon_com_action">
+      <field name="domain">[('partner_id', '=', active_id), ('program_id','=ilike', 'Com Coupon%')]</field>
+      <field name="name">Coupon Commission</field>
+      <field name="res_model">sale.coupon</field>
+      <field name="view_mode">tree,form</field>
+      <field name="view_type">form</field>
+      <field name="help" type="html">
+        <p class="o_view_nocontent_empty_folder">No coupon</p>
+      </field>
+  </record>
+
+  </data>
+</odoo>

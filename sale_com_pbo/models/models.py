@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api
+import logging
+_logger = logging.getLogger(__name__)
 
 
 class SaleCouponProgram(models.Model):
@@ -34,18 +36,29 @@ class account_invoice(models.Model):
         # lots of duplicate calls to action_invoice_paid, so we remove those already paid
         to_pay_invoices = self.filtered(lambda inv: inv.state != 'paid')
         for inv in to_pay_invoices:
-            p = inv.lnl_parent_id
-            while p.lnl_parent_id:
+            # compute hierarchy and pos before recompute cap
+            hierarchy = [(inv.partner_id, inv.partner_id.releg_pos)]
+            parent = inv.lnl_parent_id
+            while parent:
+                hierarchy.append((parent, parent.releg_pos))
+                parent = parent.lnl_parent_id
+
+            down_pos = 0
+            down_p = self.env['res.partner']
+            for p, p_pos in hierarchy:
+                pos = max(p_pos - down_pos, 0) if down_p else p_pos
                 self.env['lnl.com'].sudo().create({
                     'invoice_id': inv.id,
-                    'amount': max(0, (p.lnl_parent_id.releg_pos - p.releg_pos)) * inv.amount_total / 100.0,
-                    'pos': p.lnl_parent_id.releg_pos,
-                    'partner_id': p.lnl_parent_id.id,
-                    'down_partner_id': p.id,
-                    'down_pos': p.releg_pos,
+                    'amount': pos * inv.amount_untaxed / 100.0,
+                    'partner_id': p.id,
+                    'pos': p_pos,
+                    'down_partner_id': down_p.id,
+                    'down_pos': down_pos,
                     'paid_date': False,
                 })
-                p = p.lnl_parent_id
+                down_p = p
+                down_pos = p_pos
+
         super(account_invoice, self).action_invoice_paid()
 
 
@@ -60,9 +73,19 @@ class sale_com(models.Model):
     down_partner_id = fields.Many2one('res.partner', index=True)
     down_pos = fields.Integer()
     src_partner_id = fields.Many2one(related='invoice_id.partner_id', readonly=True)
-    src_amount = fields.Monetary(related='invoice_id.amount_total', readonly=True)
+    src_amount = fields.Monetary(related='invoice_id.amount_untaxed', readonly=True)
     currency_id = fields.Many2one(related='invoice_id.currency_id', readonly=True)
+    group_id = fields.Many2one('lnl.com.group', index=True)
 
+    paid_date = fields.Datetime(default=False)
+
+
+class sale_com_group(models.Model):
+    _name = 'lnl.com.group'
+
+    amount = fields.Float()
+    com_ids = fields.One2many('lnl.com', 'group_id')
+    partner_id = fields.Many2one('res.partner', index=True)
     paid_date = fields.Datetime(default=False)
 
 
@@ -79,7 +102,6 @@ class res_partner(models.Model):
     releg_cap = fields.Monetary(compute='get_ca_propre', store=True)
     releg_cag = fields.Monetary(compute='get_ca_global', store=True)
 
-    releg_coms = fields.Monetary(compute='get_coms')
     releg_coms_amount = fields.Monetary(compute='get_coms')
     releg_coms_unpaid_amount = fields.Monetary(compute='get_coms')
 
@@ -89,8 +111,8 @@ class res_partner(models.Model):
     @api.depends('com_ids')
     def get_coms(self):
         for record in self:
-            record.releg_coms_amount = sum(self.com_ids.mapped('amount'))
-            record.releg_coms_unpaid_amount = sum(self.com_ids.filtered(lambda x: not x.paid_date).mapped('amount'))
+            record.releg_coms_amount = sum(record.com_ids.mapped('amount'))
+            record.releg_coms_unpaid_amount = sum(record.com_ids.filtered(lambda x: not x.paid_date).mapped('amount'))
 
     def get_childs(self):
         for record in self:
@@ -123,32 +145,38 @@ class res_partner(models.Model):
                         pos = 6
                 else:
                     own = record.releg_cap
-                    all_cap = sorted(record.child_ids.mapped('releg_cap'))
+                    all_cag = record.lnl_direct_child_ids.sorted('releg_cag', True).mapped('releg_cag')
+                    top1 = len(all_cag) >= 1 and all_cag[0] or 0
+                    top2 = len(all_cag) >= 2 and all_cag[1] or 0
+                    others = sum(all_cag[2:])
 
-                    top1 = len(all_cap) >= 1 and all_cap[0] or 0
-                    top2 = len(all_cap) >= 2 and all_cap[1] or 0
-                    others = sum(all_cap[2:])
+                    def is_com(own, top1, top2, others, amount, next_amount):
+                        top1 = top1 * 0.4
+                        top2 = top2 * 0.4
+                        # if 40/40/20 < amount or not
+                        pc40 = next_amount * 0.4
+                        own = own  # > pc20 and pc20 or own
+                        top1 = min(top1, pc40)
+                        top2 = min(top2, pc40)
 
-                    def is_com(own, top1, top2, others, amount):
-                        # if 40/20/20 < amount or not
-                        pc20 = amount * 0.2
-                        pc40 = amount * 0.4
-                        own = own > pc20 and pc20 or own
-                        top1 = top1 > pc40 and pc40 or top1
-                        top2 = top2 > pc40 and pc40 or top2
-                        return (own + top1 + top2 + others) < amount
+                        _logger.info("coms for %s: pc40 %s, top1: %s, top2: %s, own: %s, other: %s " % (record.id, pc40, top1, top2, own, others))
+                        _logger.info("coms: own + top1 + top2 + others > amount =>  %s > %s" % ((own + top1 + top2 + others), amount - 1))
+                        return (own + top1 + top2 + others) > amount - 1
 
-                    coms_rate = [(500, 2), (2000, 3), (4000, 4), (8000, 5), (20000, 6), (40000, 8), (80000, 10), (160000, 12), (320000, 14), (640000, 16), (10000000, 18)]
-                    for amount, pos_pc in coms_rate:
-                        if is_com(own, top1, top2, others, amount):
+                    # (500, 3, 2000) -> Si min(40% top_1, 40% 2000) + min(40% top_2, 40% 2000) + cap > 499 => check next level
+                    coms_rate = [(500, 3, 2000), (2000, 4, 4000), (4000, 5, 8000), (8000, 6, 20000), (20000, 8, 40000), (40000, 10, 80000), (80000, 12, 160000), (160000, 14, 320000), (320000, 16, 640000), (640000, 18, 1280000)]
+                    for amount, pos_pc, next_amount in coms_rate:
+                        if is_com(own, top1, top2, others, amount, next_amount):
                             pos = pos_pc
+                        else:
+                            break
 
                 record.releg_pos = pos
 
     @api.depends('invoice_ids', 'invoice_ids.state')
     def get_ca_propre(self):
         for record in self:
-            amounts = record.invoice_ids.filtered(lambda x: x.state == 'paid').mapped('amount_total')
+            amounts = record.invoice_ids.filtered(lambda x: x.state == 'paid').mapped('amount_untaxed')
             record.releg_cap = sum(amounts)
 
     # hack, when a com is create, it is because new invoice and so new cag

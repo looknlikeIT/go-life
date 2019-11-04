@@ -14,5 +14,6 @@
     ],
     'demo': [
         'data/demo.xml',
+        'data/data.xml',
     ]
 }
