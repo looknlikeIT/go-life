@@ -113,5 +113,16 @@ for p in records:
   </record>
 
 
+  <record model="ir.actions.act_window" id="open_coupon_com_action">
+      <field name="domain">[('partner_id', '=', active_id), ('program_id','=ilike', 'Com Coupon%')]</field>
+      <field name="name">Coupon Commission</field>
+      <field name="res_model">sale.coupon</field>
+      <field name="view_mode">tree,form</field>
+      <field name="view_type">form</field>
+      <field name="help" type="html">
+        <p class="o_view_nocontent_empty_folder">No coupon</p>
+      </field>
+  </record>
+
   </data>
 </odoo>

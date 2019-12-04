@@ -111,8 +111,8 @@ class res_partner(models.Model):
     @api.depends('com_ids')
     def get_coms(self):
         for record in self:
-            record.releg_coms_amount = sum(self.com_ids.mapped('amount'))
-            record.releg_coms_unpaid_amount = sum(self.com_ids.filtered(lambda x: not x.paid_date).mapped('amount'))
+            record.releg_coms_amount = sum(record.com_ids.mapped('amount'))
+            record.releg_coms_unpaid_amount = sum(record.com_ids.filtered(lambda x: not x.paid_date).mapped('amount'))
 
     def get_childs(self):
         for record in self:
