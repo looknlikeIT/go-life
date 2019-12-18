@@ -1,6 +1,29 @@
 <odoo>
   <data>
 
+  <record id="sale_com_pbo.program_pay_com_product" model="product.product">
+      <field name="name">Commission to Coupon</field>
+      <field name="default_code">COM2COUP</field>
+      <field name="type">service</field>
+      <field name="sale_ok" eval="False"/>
+      <field name="purchase_ok" eval="False"/>
+      <field name="list_price">0.0</field>
+  </record>
+
+  <record id="sale_com_pbo.program_pay_com" model="sale.coupon.program">
+        <field name="discount_apply_on">on_order</field>
+        <field name="discount_fixed_amount">0</field>
+        <field name="discount_type">fixed_amount</field>
+        <field name="name">Com coupon</field>
+        <field name="program_type">coupon_program</field>
+        <field name="reward_product_id" eval="ref('sale_com_pbo.program_pay_com_product')"/>
+        <field name="reward_type">discount</field>
+        <field name="rule_minimum_amount_tax_inclusion">tax_excluded</field>
+        <field name="rule_products_domain" eval="[['sale_ok', '=', True]]" />
+        <field name="validity_duration">0</field>
+        <field name="company_id" ref="base.main_company"/>
+  </record>
+
   <record id="sale_com_pbo.server_act_pay_partner_coms" model="ir.actions.server">
     <field name="binding_model_id" ref="base.model_res_partner"/>
     <field name="binding_type">action</field>
@@ -10,11 +33,11 @@ for p in records:
     total = round(p.releg_coms_unpaid_amount, 2)
     if total > 0:
       if not p.vat:
-        prog = env.ref('lnl_com.program_pay_com').copy({
+        prog = env.ref('sale_com_pbo.program_pay_com').copy({
           'name': 'Com Coupon %s' % total,
           'discount_fixed_amount': total,
         })
-        report = env.ref('lnl_com.sales_coupon_program_action_report')
+        report = env.ref('sale_com_pbo.sales_coupon_program_action_report')
         coupon = env['sale.coupon'].create({
           'program_id': prog.id,
           'partner_id': p.id,

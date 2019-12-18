@@ -1,0 +1,103 @@
+<odoo>
+  <record id="sale_com_pbo.sales_coupon_program_action_report" model="ir.actions.report">
+    <field name="attachment" eval="'\'Coms-%s.pdf\' % time.strftime(\'%Y%m\')'"/>
+    <field name="attachment_use" eval="False"/>
+    <field name="binding_model_id" ref="sale_coupon.model_sale_coupon_program"/>
+    <field name="binding_type">report</field>
+    <field name="groups_id" eval="[(6, 0, [])]"/>
+    <field name="model">sale.coupon</field>
+    <field name="multi" eval="False"/>
+    <field name="name">Sales Coupon Program Report</field>
+    <field name="report_name">sale_com_pbo.report_view_com</field>
+    <field name="report_type">qweb-pdf</field>
+  </record>
+
+  <record id="sale_com_pbo.report_view_com" model="ir.ui.view">
+    <field name="active" eval="True"/>
+    <field name="arch" type="xml">
+      <t t-name="studio_report">
+        <t t-call="web.html_container">
+          <t t-foreach="docs" t-as="doc">
+            <t t-esc="o"/>
+            <t t-call="web.internal_layout">
+              <div class="page"/>
+            </t>
+          </t>
+        </t>
+      </t>
+    </field>
+    <field name="field_parent" eval="False"/>
+    <field name="groups_id" eval="[(6, 0, [])]"/>
+    <field name="inherit_id" eval="False"/>
+    <field name="key">sale_com_pbo.report_view_com</field>
+    <field name="mode">primary</field>
+    <field name="model" eval="False"/>
+    <field name="name">sale_com_pbo.report_view_com</field>
+    <field name="priority">16</field>
+    <field name="type">qweb</field>
+  </record>
+
+  <record id="sale_com_pbo.report_view_com_document" model="ir.ui.view">
+    <field name="active" eval="True"/>
+    <field name="arch" type="xml">
+      <data>
+        <xpath expr="/t/t/t/t/div" position="inside">
+          <t t-foreach="docs" t-as="o">
+            <div class="card">
+              <div class="card-body">
+                <div class="page">
+                    <div class="row text-center">
+                        <div class="o_offer col-lg-12">
+                            <h4 t-if="o.partner_id.name">
+                                Congratulations
+                                <t t-esc="o.partner_id.name"/>,
+                            </h4>
+                            <h1 t-if="o.program_id.discount_type == 'fixed_amount'" style="color:#d48157">
+                                <strong><span t-field="o.program_id.discount_fixed_amount" t-options='{"widget": "monetary", "display_currency": o.program_id.currency_id}'/></strong>
+                            </h1>
+                            <t t-set="text" t-value="'OF COMMISSIONS AVAILABLE FOR YOUR NEXT ORDER!'"/>
+                            <h3 t-esc="text"/>
+                            <h3>
+                                <em>CODE :</em>
+                                <strong  style="background-color:#d48157;color:white;margin:10px;" t-esc="o.code"></strong>
+                            </h3>
+                            <br/>
+                            <img alt="Barcode" t-att-src="'/report/barcode/Code128/%s' % o.code"/>
+                            <br/>
+                            <div class="mt64">
+                                <div class="col-6 text-right">
+                                <img alt="Logo" t-att-src="'/logo?company=%d' % (o.program_id.company_id)" t-att-alt="'%s' % (o.program_id.company_id.name)" style="border:0px solid transparent; height: 50; width: 200px;" height="50"/>
+                                </div>
+                                <div class="col-6 text-left">
+                                    <span t-field="o.program_id.company_id.partner_id"
+                                        t-options='{"widget": "contact", "fields": ["address", "email"], "no_marker": True}'/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+              </div>
+            </div>
+          </t>
+        </xpath>
+      </data>
+    </field>
+    <field name="field_parent" eval="False"/>
+    <field name="groups_id" eval="[(6, 0, [])]"/>
+    <field name="inherit_id" ref="sale_com_pbo.report_view_com"/>
+    <field name="key">gen_key.62e470</field>
+    <field name="mode">extension</field>
+    <field name="model" eval="False"/>
+    <field name="name">sale_com_pbo.report_view_com customization</field>
+    <field name="priority">99</field>
+    <field name="type">qweb</field>
+  </record>
+
+  <report
+    id="report_coupon_com"
+    model="sale.coupon"
+    name="sale_com_pbo.report_view_com"
+    file="sale_com_pbo.report_view_com"
+    report_type="qweb-pdf"
+    string="Coupon Commission"/>
+</odoo>

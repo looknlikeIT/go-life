@@ -1,5 +1,17 @@
 <odoo>
   <data>
+
+      <record model="ir.actions.act_window" id="open_coupon_com_action">
+        <field name="domain">[('partner_id', '=', active_id), ('program_id','=ilike', 'Com Coupon%')]</field>
+        <field name="name">Coupon Commission</field>
+        <field name="res_model">sale.coupon</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_type">form</field>
+        <field name="help" type="html">
+          <p class="o_view_nocontent_empty_folder">No coupon</p>
+        </field>
+      </record>
+
       <record id="view_partner_form_inherit_coms_pbo" model="ir.ui.view">
         <field name="name">res.partner.form.coms.pbo</field>
         <field name="model">res.partner</field>
@@ -31,8 +43,8 @@
               </page>
           </xpath>
           <button name="toggle_active" position="before">
-              <button class="oe_stat_button" type="action" icon="fa-ticket" name="647" attrs="{'invisible': [('releg_coms_amount','=', 0)]}">
-                  <field string="Com" name="releg_coms_amount" widget="statinfo"/> €
+              <button class="oe_stat_button" type="action" icon="fa-ticket" name="%(sale_com_pbo.open_coupon_com_action)d" attrs="{'invisible': [('releg_coms_amount','=', 0)]}">
+                  <field string="Com" name="releg_coms_amount" widget="statinfo"/>
               </button>
           </button>
         </field>

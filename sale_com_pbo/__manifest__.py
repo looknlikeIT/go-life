@@ -10,6 +10,7 @@
     'data': [
         'security/ir.model.access.csv',
         'views/views.xml',
+        'data/reports.xml',
         'data/data.xml',
         # 'views/templates.xml',
     ],
