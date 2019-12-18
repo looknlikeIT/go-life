@@ -132,16 +132,14 @@ class res_partner(models.Model):
             else:
                 pos = 2
                 if not record.vat:
-                    amount_to_pos = record.releg_cap
-                    if amount_to_pos < 500:
-                        pos = 2
-                    elif amount_to_pos < 2000:
+                    amount_to_pos = record.releg_cag
+                    if amount_to_pos > 500:
                         pos = 3
-                    elif amount_to_pos < 4000:
+                    if amount_to_pos > 1999:
                         pos = 4
-                    elif amount_to_pos < 8000:
+                    if amount_to_pos > 3999:
                         pos = 5
-                    else:  # amount_to_pos < 20000:
+                    if amount_to_pos > 8000:
                         pos = 6
                 else:
                     own = record.releg_cap
