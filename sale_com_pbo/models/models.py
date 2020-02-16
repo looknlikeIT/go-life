@@ -43,21 +43,33 @@ class account_invoice(models.Model):
                 hierarchy.append((parent, parent.releg_pos))
                 parent = parent.lnl_parent_id
 
-            down_pos = 0
-            down_p = self.env['res.partner']
-            for p, p_pos in hierarchy:
-                pos = max(p_pos - down_pos, 0) if down_p else p_pos
-                self.env['lnl.com'].sudo().create({
-                    'invoice_id': inv.id,
-                    'amount': pos * inv.amount_untaxed / 100.0,
-                    'partner_id': p.id,
-                    'pos': p_pos,
-                    'down_partner_id': down_p.id,
-                    'down_pos': down_pos,
-                    'paid_date': False,
-                })
-                down_p = p
-                down_pos = p_pos
+            if inv.type == 'out_invoice':
+                down_pos = 0
+                down_p = self.env['res.partner']
+                for p, p_pos in hierarchy:
+                    pos = max(p_pos - down_pos, 0) if down_p else p_pos
+                    print("pay %s of com for %s" % (pos * inv.amount_untaxed / 100.0, p.id))
+                    self.env['lnl.com'].sudo().create({
+                        'invoice_id': inv.id,
+                        'amount': pos * inv.amount_untaxed / 100.0,
+                        'partner_id': p.id,
+                        'pos': p_pos,
+                        'down_partner_id': down_p.id,
+                        'down_pos': down_pos,
+                        'paid_date': False,
+                    })
+                    down_p = p
+                    down_pos = p_pos
+            elif inv.type == 'out_refund':
+                coms = self.env['lnl.com'].search([('invoice_id', '=', inv.origin)])
+                for c in coms:
+                    print("refund %s of com for %s" % (c.amount * -1, c.partner_id.id))
+                    if c.partner_id.vat:
+                        c.copy({
+                            'invoice_id': inv.id,
+                            'amount': c.partner_id.vat and (c.amount * -1) or 0,
+                            'note': 'refund of %s (com %s) - vat %s' % (inv.origin, c.id, c.partner_id.vat or 'N/A'),
+                        })
 
         super(account_invoice, self).action_invoice_paid()
 
@@ -75,9 +87,10 @@ class sale_com(models.Model):
     src_partner_id = fields.Many2one(related='invoice_id.partner_id', readonly=True)
     src_amount = fields.Monetary(related='invoice_id.amount_untaxed', readonly=True)
     currency_id = fields.Many2one(related='invoice_id.currency_id', readonly=True)
-    group_id = fields.Many2one('lnl.com.group', index=True)
+    group_id = fields.Many2one('lnl.com.group', index=True, copy=False)
 
-    paid_date = fields.Datetime(default=False)
+    paid_date = fields.Datetime(default=False, copy=False)
+    note = fields.Text()
 
 
 class sale_com_group(models.Model):
