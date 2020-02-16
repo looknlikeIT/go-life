@@ -76,15 +76,16 @@ class account_invoice(models.Model):
 
 class sale_com(models.Model):
     _name = 'lnl.com'
+    _description = 'Coms'
 
     invoice_id = fields.Many2one('account.invoice', readonly=True)
     create_date = fields.Datetime('Date')
     amount = fields.Float()
     pos = fields.Integer()
-    partner_id = fields.Many2one('res.partner', index=True)
+    partner_id = fields.Many2one('res.partner', string="Partner", index=True)
     down_partner_id = fields.Many2one('res.partner', index=True)
     down_pos = fields.Integer()
-    src_partner_id = fields.Many2one(related='invoice_id.partner_id', readonly=True)
+    src_partner_id = fields.Many2one(related='invoice_id.partner_id', string="Partner Src", readonly=True)
     src_amount = fields.Monetary(related='invoice_id.amount_untaxed', readonly=True)
     currency_id = fields.Many2one(related='invoice_id.currency_id', readonly=True)
     group_id = fields.Many2one('lnl.com.group', index=True, copy=False)
