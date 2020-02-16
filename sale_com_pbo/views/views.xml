@@ -12,6 +12,17 @@
         </field>
       </record>
 
+     <record id="view_attachment_form_inherit" model="ir.ui.view">
+        <field name="name">ir.attachment.form.inherit</field>
+        <field name="model">ir.attachment</field>
+        <field name="inherit_id" ref="base.view_attachment_form"/>
+        <field name="arch" type="xml">
+            <field name="type" position="before">
+                <field name="attach_tag_ids" />
+            </field>
+        </field>
+    </record>
+
       <record id="view_partner_form_inherit_coms_pbo" model="ir.ui.view">
         <field name="name">res.partner.form.coms.pbo</field>
         <field name="model">res.partner</field>
@@ -38,6 +49,7 @@
                         <field name="releg_cap"/>
                       </tree>
                     </field>
+                    <field name="attachment_tag_id"/>
                   </group>
                 </group>
               </page>

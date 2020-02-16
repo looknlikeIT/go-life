@@ -96,11 +96,27 @@ class sale_com(models.Model):
 
 class sale_com_group(models.Model):
     _name = 'lnl.com.group'
+    _description = 'Coms group'
 
     amount = fields.Float()
     com_ids = fields.One2many('lnl.com', 'group_id')
     partner_id = fields.Many2one('res.partner', index=True)
     paid_date = fields.Datetime(default=False)
+
+
+class attach_tag(models.Model):
+    _name = 'ir.attachment.tag'
+    _description = 'Attachment tag'
+
+    name = fields.Char(required=True)
+    attachment_ids = fields.Many2many('ir.attachment', 'ir_attachment_ir_attachment_tag', 'attach_id', 'tag_id')
+    partner_ids = fields.One2many('res.partner', 'attachment_tag_id')
+
+
+class ir_attachment(models.Model):
+    _inherit = 'ir.attachment'
+
+    attach_tag_ids = fields.Many2many('ir.attachment.tag', 'ir_attachment_ir_attachment_tag', 'tag_id', 'attach_id')
 
 
 class res_partner(models.Model):
@@ -121,6 +137,8 @@ class res_partner(models.Model):
 
     com_ids = fields.One2many('lnl.com', 'partner_id')
     invoice_ids = fields.One2many('account.invoice', 'partner_id')
+
+    attachment_tag_id = fields.Many2one('ir.attachment.tag')
 
     @api.depends('com_ids')
     def get_coms(self):

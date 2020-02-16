@@ -1,3 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_sale_com_lnl_com,sale_com_pbo.lnl_com,model_lnl_com,base.group_user,1,0,0,0
 access_lnl_com_group,access_lnl_com_group,model_lnl_com_group,base.group_user,1,0,0,0
+access_ir_attachment_tag,access_ir_attachment_tag,model_ir_attachment_tag,base.group_user,1,1,1,1
